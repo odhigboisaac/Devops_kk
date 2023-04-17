@@ -1,0 +1,15 @@
+# Clone repo to get the all yaml files
+git clone  https://gitlab.com/nb-tech-support/devops.git
+
+### Create PV
+kubectl apply -f devops/kubernetes-challenges/challenge-4/pv-cluster.yaml
+
+### Create service
+kubectl apply -f devops/kubernetes-challenges/challenge-4/redis-cluster-service.yaml
+
+### Create redis-cluster
+kubectl apply -f devops/kubernetes-challenges/challenge-4/redis-statefulset.yaml
+
+### validate 
+kubectl get all 
+kubectl get pvc

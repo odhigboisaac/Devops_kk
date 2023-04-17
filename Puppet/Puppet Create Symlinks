@@ -1,0 +1,27 @@
+class symlink {
+
+  # First create a symlink to /var/www/html
+
+  file { '/opt/dba':
+
+    ensure => 'link',
+
+    target => '/var/www/html',
+
+  }
+
+   # Now create media.txt under /opt/dba
+
+  file { '/opt/dba/media.txt':
+
+    ensure => 'present',
+
+  }
+
+}
+
+node 'stapp01.stratos.xfusioncorp.com', 'stapp02.stratos.xfusioncorp.com', 'stapp03.stratos.xfusioncorp.com' {
+
+  include symlink
+
+}

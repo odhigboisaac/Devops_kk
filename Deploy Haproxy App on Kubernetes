@@ -1,0 +1,183 @@
+---
+
+# Service Account definition , point 2
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: haproxy-service-account-devops
+  namespace: haproxy-controller-devops
+---
+
+# ClusterRole definition , point 3 
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: haproxy-cluster-role-devops
+rules:
+  - apiGroups: [""]
+    resources:
+      [
+        "configmaps",
+        "endpoints",
+        "nodes",
+        "pods",
+        "services",
+        "namespaces",
+        "events",
+        "serviceaccounts",
+      ]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions"]
+    resources: ["ingresses", "ingresses/status"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "patch", "update"]
+---
+
+# ClusterRoleBinding definition , point 4
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: haproxy-cluster-role-binding-devops
+  namespace: haproxy-controller-devops
+roleRef:
+  kind: ClusterRole
+  name: haproxy-cluster-role-devops
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: haproxy-service-account-devops
+    namespace: haproxy-controller-devops
+---
+
+# Backend Service definition, point 6
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-backend-devops
+  namespace: haproxy-controller-devops
+  labels:
+    run: ingress-default-backend
+spec:
+  selector:
+    run: ingress-default-backend
+  ports:
+    - name: port-backend
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+
+# Frontend Service definition, point 8
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-service-devops
+  namespace: haproxy-controller-devops
+  labels:
+    run: haproxy-ingress
+spec:
+  type: NodePort
+  selector:
+    run: haproxy-ingress
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+      nodePort: 32456
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+      nodePort: 32567
+    - name: stat
+      port: 1024
+      protocol: TCP
+      targetPort: 1024
+      nodePort: 32678
+---
+
+# Backend Deployment definition, point 5
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment-devops
+  namespace: haproxy-controller-devops
+  labels:
+    run: ingress-default-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: ingress-default-backend
+  template:
+    metadata:
+      labels:
+        run: ingress-default-backend
+    spec:
+      containers:
+        - name: backend-container-devops
+          image: gcr.io/google_containers/defaultbackend:1.0
+          ports:
+            - containerPort: 8080
+---
+
+# Frontend Deployment definition, point 7
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy-ingress-devops
+  namespace: haproxy-controller-devops
+  labels:
+    run: ingress-default-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: haproxy-ingress
+  template:
+    metadata:
+      labels:
+        run: haproxy-ingress
+    spec:
+      serviceAccountName: haproxy-service-account-devops
+      containers:
+        - name: ingress-container-devops
+          image: haproxytech/kubernetes-ingress
+          args:
+            - "--default-backend-service=haproxy-controller-devops/service-backend-devops"
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+            - name: stat
+              containerPort: 1024
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 1024
+          env:
+            - name: TZ
+              value: Etc/UTC
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace

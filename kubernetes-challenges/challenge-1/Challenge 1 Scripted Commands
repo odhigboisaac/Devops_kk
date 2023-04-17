@@ -1,0 +1,34 @@
+# Clone repo to get the all yaml files
+git clone  https://gitlab.com/nb-tech-support/devops.git
+
+### PVC
+kubectl apply -f devops/kubernetes-challenges/challenge-1/jekyll-pvc.yaml
+
+### POD
+kubectl apply -f devops/kubernetes-challenges/challenge-1/jekyll-pod.yaml
+
+   
+### Service
+kubectl apply -f devops/kubernetes-challenges/challenge-1/jekyll-node-service.yaml
+
+### Role
+kubectl create role developer-role --resource=pods,svc,pvc --verb="*" -n development
+
+## RoleBinding
+kubectl create rolebinding developer-rolebinding --role=developer-role --user=martin -n development
+
+## Martin
+
+kubectl config set-credentials martin --client-certificate ./martin.crt --client-key ./martin.key
+kubectl config set-context developer --cluster kubernetes --user martin
+
+## kube-config
+
+kubectl config use-context developer
+
+##To validate the access,
+kubectl get all -n development
+
+kubectl get rolebindings -n development
+
+kubectl config get-contexts

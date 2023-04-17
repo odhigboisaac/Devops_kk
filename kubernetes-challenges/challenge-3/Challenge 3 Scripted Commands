@@ -1,0 +1,43 @@
+# Clone repo to get the all yaml files
+git clone  https://gitlab.com/nb-tech-support/devops.git
+
+### create namespace
+kubectl create namespace vote
+
+### db-deployment
+kubectl apply -f devops/devops/kubernetes-challenges/challenge-3/db-deployment.yml
+
+### db-service
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/db-service.yml
+
+### redis-deployment
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/redis-deployment.yml
+
+### redis-service
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/redis-service.yml
+
+### worker-deployment
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/worker.yml
+
+### result-deployment
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/result-deployment.yml
+
+### result-service
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/result-service.yml
+
+### vote-deployment
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/vote-deployment.yml
+
+### vote-service
+
+kubectl apply -f devops/kubernetes-challenges/challenge-3/vote-service.yml
+
+### validate 
+kubectl get all -n vote 
